@@ -38,3 +38,26 @@
 
 + 整体框架（上-->下）
 + 业务代码（下-->上）
+
+1. 顶层设计（上-->下）
+2. 业务代码：从下往上写，核心应该关心业务的实现
+
+### 项目结构
+```sh
+go mod init "github.com/yyyyff/go_study/tree/main/vblog"
+```
+
++ main.go: 入口文件
++ conf: 程序的配置处理
++ exception: 业务自定义异常 （token过期等）
++ response: 请求返回的统一数据格式 : {"code": 0, "msg": ""}
++ protocol: 协议服务器
++ apps: 业务模块开发区域
+
+### 业务模块
+
+![](./docs/images/design.png)
+
++ 博客管理（Blog）
++ 用户管理（User）
++ 令牌管理（Token）
