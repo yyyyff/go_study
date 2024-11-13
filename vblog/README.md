@@ -54,10 +54,152 @@ go mod init "github.com/yyyyff/go_study/tree/main/vblog"
 + protocol: 协议服务器
 + apps: 业务模块开发区域
 
-### 业务模块
-
+### 概要设计（流程）
 ![](./docs/images/design.png)
 
 + 博客管理（Blog）
 + 用户管理（User）
 + 令牌管理（Token）
+
+
+### 数据库设计
+
+1. 博客管理
+```sql
+CREATE TABLE `blogs` (
+    `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '文章的ID',
+    `tags` text NOT NULL COMMENT '标签',
+    `created_at` int NOT NULL COMMENT '创建时间',
+    `published_at` int NOT NULL COMMENT '发布时间',
+    `updated_at` int NOT NULL COMMENT '更新时间',
+    `title` varchar(255) NOT NULL COMMENT '文章标题',
+    `author` varchar(255) COMMENT '作者',
+    `content` text NOT NULL COMMENT '文章内容',
+    `status` tinyint NOT NULL COMMENT '文章状态',
+    `summary` varchar(255) NOT NULL COMMENT '文章概要信息',
+    `create_by` varchar(255) NOT NULL COMMENT '创建人',
+    `audit_at` int NOT NULL COMMENT '审核时间',
+    `is_audit_pass` tinyint NOT NULL COMMENT '是否审核通过',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_title` (`title`) COMMENT 'title添加唯一键约束'
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+```
+2. 用户管理
+```sql
+CREATE TABLE `users` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `created_at` INT NOT NULL COMMENT '创建时间',
+  `updated_at` INT NOT NULL COMMENT '更新时间',
+  `username` VARCHAR ( 255 ) NOT NULL COMMENT '用户名，用户名不允许重复的',
+  `password` VARCHAR ( 255 ) NOT NULL COMMENT '不能保存用户的明文密码',
+  `label` VARCHAR ( 255 ) NOT NULL COMMENT '用户标签',
+  `role` TINYINT NOT NULL COMMENT '用户的角色',
+  PRIMARY KEY ( `id` ) USING BTREE,
+  UNIQUE KEY `idx_user` ( `username` ) 
+) ENGINE = InnoDB AUTO_INCREMENT = 5 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci
+```
+3. 令牌管理
+```sql
+CREATE TABLE `tokens` (
+  `created_at` INT NOT NULL COMMENT '创建时间',
+  `updated_at` INT NOT NULL COMMENT '更新时间',
+  `user_id` INT NOT NULL COMMENT '用户的id',
+  `username` VARCHAR ( 255 ) NOT NULL COMMENT '用户名，用户名不允许重复的',
+  `access_token` VARCHAR ( 255 ) NOT NULL COMMENT '用户的访问令牌',
+  `access_toekn_expired_at` INT NOT NULL COMMENT '令牌过期时间',
+  `refresh_toekn` VARCHAR ( 255 ) NOT NULL COMMENT '刷新令牌',
+  `refresh_toekn_expired_at` INT NOT NULL COMMENT '刷新令牌过期时间',
+  PRIMARY KEY ( `ACCESS_TOKEN` ) USING BTREE,
+  UNIQUE KEY `idx_token` ( `access_token` ) USING BTREE 
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci
+```
+
+注意：
+```
+现在流行尽量避免使用外键，由程序根据业务逻辑自行决定整个关联关系怎么处理
+```
+### Restful API设计
+
+1. Restful: (Resource) Reprresentational State Transfer (资源状态转换) API 风格
++ Resource Representational: 资源定义（服务端对象或数据库内的一行记录）
++ State Transfer: 创建/修改/删除
+
+这些风格如何表现在API?
+```
+1. 资源定义
+1.1 一类资源
+/vblogs/api/v1/blogs: blogs 就是资源的类型:  blogs 博客
+/vblogs/api/v1/users: users 就是资源的类型:  users 用户名
+1.2 一个资源
+/blogs/api/v1/users/1: 1 就是资源的id,id为1的资源
+
+2. 状态转换: 通过HTTP Method来定义资源的状态转化, 理解为用户的针对某类或者某个资源的动作
+POST: 创建一个类型的资源, POST /vblogs/api/v1/users 创建一个用户, 具体参数存放再body
+PATCH: 部分修改（补丁） , patch  /vblogs/api/v1/users/1 , 对id为1的用户 做属性的部分修改
+PUT: 全量修改（覆盖） , PUT  /vblogs/api/v1/users/1 , 对id为1的用户 做属性的全量修改
+DELETE: 资源删除
+GET: 获取一类资源： GET /vblogs/api/v1/users, 获取一个资源 GET /vblogs/api/v1/users/1
+```
+
+其他风格的API 
+```
+POST url命名动作来表示资源的操作:  POST /vblogs/api/v1/users/(list/get/delete/update/...)
+```
+
+#### 博客管理(设计完整的RESTful API)
+
+1. 创建博客 POST /vblogs/api/v1/blogs
+```json
+{
+    "title":"",
+    "author":"",
+    "content":"",
+    "summary":""
+}
+```
+
+2. 修改博客(部分): PATCH /vblogs/api/v1/blogs/:id
+```json
+{
+    "title":"",
+    "author":"",
+    "content":"",
+    "summary":""
+}
+```
+
+3. 修改博客(全量): PUT /vblogs/api/v1/blogs/:id
+```json
+{
+    "title":"",
+    "author":"",
+    "content":"",
+    "summary":""
+}
+```
+
+4. 删除博客： DELETE /vblogs/api/v1/blogs/:id
+```json
+body不传数据
+```
+
+5. GET /vblogs/api/v1/blogs/:id
+```json
+body不传数据
+```
+
+#### 令牌管理(设计基础必须)
+1. POST /vblogs/api/v1/tokens
+```json
+{
+    "username": "",
+    "password": "",
+    "remember": true,
+}
+```
+2. DELETE /vblogs/api/v1/tokens
+```json
+body不传数据
+```
+
+#### 用户管理(功能完整, 不做API, 可以直接操作数据库, 也可以通过单元测试)
