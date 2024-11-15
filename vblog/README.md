@@ -34,25 +34,7 @@
 ### 业务代码风格
 ![](./docs/images/mvc_ddd.png)
 
-### 项目编写流程
-
-+ 整体框架（上-->下）
-+ 业务代码（下-->上）
-
-1. 顶层设计（上-->下）
-2. 业务代码：从下往上写，核心应该关心业务的实现
-
-### 项目结构
-```sh
-go mod init "github.com/yyyyff/go_study/tree/main/vblog"
-```
-
-+ main.go: 入口文件
-+ conf: 程序的配置处理
-+ exception: 业务自定义异常 （token过期等）
-+ response: 请求返回的统一数据格式 : {"code": 0, "msg": ""}
-+ protocol: 协议服务器
-+ apps: 业务模块开发区域
+## 项目设计
 
 ### 概要设计（流程）
 ![](./docs/images/design.png)
@@ -203,3 +185,84 @@ body不传数据
 ```
 
 #### 用户管理(功能完整, 不做API, 可以直接操作数据库, 也可以通过单元测试)
+
+
+## 项目开发
+
+### 项目编写流程
+
++ 整体框架（上-->下）
++ 业务代码（下-->上）
+
+1. 顶层设计（上-->下）
+2. 业务代码：从下往上写，核心应该关心业务的实现
+
+### 项目结构
+```sh
+go mod init "github.com/yyyyff/go_study/tree/main/vblog"
+```
+
++ main.go: 入口文件
++ conf: 程序的配置处理
++ exception: 业务自定义异常 （token过期等）
++ response: 请求返回的统一数据格式 : {"code": 0, "msg": ""}
++ protocol: 协议服务器
++ apps: 业务模块开发区域
+
+
+### 业务模块开发
+业务模块开发遵循下面规则：
+定义业务(Interface): 梳理需求，抽象业务逻辑，定义出业务的数据结构与结构约束
+业务实现(Controller): 根据业务定义,选择具体的技术(比如MySQL/MongoDB/ES),做具体的业务实现
+业务接口(API): 如需对外提供API,则按需将需要的对外暴漏API接口
+
+表现在目录结构上：
+定义业务: 业务模块顶层魔窟，具体表现为: user/interface.go(接口定义)
+业务实现: 业务模块内impl目录, 具体表现为: user/impl/impl.go(业务实现对象)
+业务接口: 业务模块内api目录, 具体表现为: user/api/http.go(HTTP Restful接口实现对象)
+
+### 用户管理模块开发
+
+1. 定义业务
+```go
+// 面向对象
+// user.Service
+// 接口定义，一定要考虑兼容性,接口的参数不能变
+// 中间件参数,取消/Trace/... 怎么产生怎么传递？
+// 用context传递非业务需求
+type Service interface {
+	// 用户创建
+	CreateUser(context.Context, *CreateUserRequest) (*User, error)
+	// 查询用户列表
+	QueryUser(context.Context, *QueryUserRequest) (*UserSet, error)
+	// 查询用户详情
+	DescribeUser(context.Context, *DescribeUserRequest) (*User, error)
+
+	// 作业：
+	// 用户修改
+	// 用户删除
+}
+```
+
+2. 业务实现
+```go
+var _ user.Service = (*UserServiceImpl)(nil)
+
+// 实现user.Service
+
+func (i *UserServiceImpl) CreateUser(ctx context.Context, in *user.CreateUserRequest) (*user.User, error) {
+	return nil, nil
+}
+
+// 查询用户列表
+func (i *UserServiceImpl) QueryUser(ctx context.Context, in *user.QueryUserRequest) (*user.UserSet, error) {
+	return nil, nil
+}
+
+// 查询用户详情
+func (i *UserServiceImpl) DescribeUser(ctx context.Context, in *user.DescribeUserRequest) (*user.User, error) {
+	return nil, nil
+}
+```
+
+3. 怎么验证当前这个业务实现是不是正确的？写单元测试TDD
