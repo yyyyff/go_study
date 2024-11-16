@@ -14,12 +14,12 @@ func (i *UserServiceImpl) CreateUser(ctx context.Context, in *user.CreateUserReq
 	return nil, nil
 }
 
-// 查询用户列表
+// QueryUser 查询用户列表
 func (i *UserServiceImpl) QueryUser(ctx context.Context, in *user.QueryUserRequest) (*user.UserSet, error) {
 	return nil, nil
 }
 
-// 查询用户详情
+// DescribeUser 查询用户详情
 func (i *UserServiceImpl) DescribeUser(ctx context.Context, in *user.DescribeUserRequest) (*user.User, error) {
 	return nil, nil
 }
